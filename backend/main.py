@@ -7,7 +7,8 @@ import shutil
 app = FastAPI()
 
 
-# Temporary storage for job description
+# Temporary storage
+resume_data = {}
 job_description_data = {}
 
 
@@ -42,6 +43,10 @@ async def upload_resume(file: UploadFile = File(...)):
             "error": "Only PDF and DOCX files are supported"
         }
 
+    # Save resume text for analysis
+    resume_data["filename"] = file.filename
+    resume_data["text"] = text
+
     return {
         "filename": file.filename,
         "text": text
@@ -65,4 +70,72 @@ def get_job_description():
 
     return {
         "job": job_description_data
+    }
+
+
+@app.post("/analyze-resume")
+def analyze_resume():
+
+    resume_text = resume_data.get("text", "")
+    job_text = job_description_data.get("description", "")
+
+    if not resume_text:
+        return {
+            "error": "No resume uploaded"
+        }
+
+    if not job_text:
+        return {
+            "error": "No job description added"
+        }
+
+
+    skills = [
+        "python",
+        "fastapi",
+        "javascript",
+        "react",
+        "sql",
+        "machine learning",
+        "docker",
+        "aws"
+    ]
+
+
+    resume_lower = resume_text.lower()
+    job_lower = job_text.lower()
+
+
+    matched_skills = []
+
+    for skill in skills:
+        if skill in resume_lower and skill in job_lower:
+            matched_skills.append(skill)
+
+
+    missing_skills = []
+
+    for skill in skills:
+        if skill in job_lower and skill not in resume_lower:
+            missing_skills.append(skill)
+
+
+    required_skills = [
+        skill for skill in skills
+        if skill in job_lower
+    ]
+
+
+    if required_skills:
+        score = int(
+            (len(matched_skills) / len(required_skills)) * 100
+        )
+    else:
+        score = 0
+
+
+    return {
+        "score": score,
+        "matched_skills": matched_skills,
+        "missing_skills": missing_skills
     }
