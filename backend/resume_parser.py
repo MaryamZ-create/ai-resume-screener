@@ -2,23 +2,18 @@ from pypdf import PdfReader
 from docx import Document
 
 
-def extract_text_from_pdf(file_path):
+def extract_text_from_pdf(file_path: str) -> str:
     text = ""
-
     reader = PdfReader(file_path)
 
     for page in reader.pages:
-        text += page.extract_text() or ""
+        if page.extract_text():
+            text += page.extract_text()
 
     return text
 
 
-def extract_text_from_docx(file_path):
-    text = ""
-
+def extract_text_from_docx(file_path: str) -> str:
     doc = Document(file_path)
-
-    for paragraph in doc.paragraphs:
-        text += paragraph.text + "\n"
-
+    text = "\n".join([para.text for para in doc.paragraphs])
     return text
