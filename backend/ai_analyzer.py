@@ -8,6 +8,9 @@ load_dotenv()
 
 api_key = os.getenv("GEMINI_API_KEY")
 
+if not api_key:
+    raise ValueError("GEMINI_API_KEY is missing")
+
 genai.configure(api_key=api_key)
 
 model = genai.GenerativeModel("gemini-flash-latest")
@@ -48,11 +51,11 @@ def analyze_resume(resume_text: str, job_description: str):
         job_description
     )
 
-    response = model.generate_content(prompt)
-
-    result = response.text.strip()
-
     try:
+        response = model.generate_content(prompt)
+
+        result = response.text.strip()
+
         return json.loads(result)
 
     except json.JSONDecodeError:
@@ -60,6 +63,15 @@ def analyze_resume(resume_text: str, job_description: str):
             "match_score": 0,
             "missing_keywords": [],
             "suggestions": [
-                "Gemini returned invalid JSON"
+                "AI returned invalid JSON response"
+            ]
+        }
+
+    except Exception as e:
+        return {
+            "match_score": 0,
+            "missing_keywords": [],
+            "suggestions": [
+                f"AI service error: {str(e)}"
             ]
         }
