@@ -1,16 +1,20 @@
 import os
 import json
-from openai import OpenAI
 from dotenv import load_dotenv
+import google.generativeai as genai
+
 
 load_dotenv()
 
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY")
-)
+api_key = os.getenv("GEMINI_API_KEY")
+
+genai.configure(api_key=api_key)
+
+model = genai.GenerativeModel("gemini-flash-latest")
 
 
 def create_prompt(resume_text: str, job_description: str):
+
     prompt = f"""
 You are an AI resume screening assistant.
 
@@ -44,23 +48,18 @@ def analyze_resume(resume_text: str, job_description: str):
         job_description
     )
 
-    response = client.chat.completions.create(
-        model="gpt-4.1-mini",
-        messages=[
-            {
-                "role": "system",
-                "content": "You analyze resumes and return JSON only."
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-        response_format={
-            "type": "json_object"
+    response = model.generate_content(prompt)
+
+    result = response.text.strip()
+
+    try:
+        return json.loads(result)
+
+    except json.JSONDecodeError:
+        return {
+            "match_score": 0,
+            "missing_keywords": [],
+            "suggestions": [
+                "Gemini returned invalid JSON"
+            ]
         }
-    )
-
-    result = response.choices[0].message.content
-
-    return json.loads(result)
