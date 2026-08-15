@@ -239,3 +239,45 @@ def flashcards():
     return {
         "flashcards": flashcards
     }
+# -------------------------------
+# STUDY QUIZ
+# -------------------------------
+
+@app.post("/quiz")
+def quiz():
+
+    if "study_text" not in resume_data:
+        return {
+            "error": "No study document uploaded"
+        }
+
+    text = resume_data["study_text"].lower()
+
+    questions = []
+
+    if "tcp" in text and "udp" in text:
+        questions.append({
+            "question": "Which protocol is connection-oriented?",
+            "options": [
+                "A. UDP",
+                "B. TCP",
+                "C. DNS",
+                "D. HTTP"
+            ],
+            "answer": "B. TCP"
+        })
+
+        questions.append({
+            "question": "Which protocol is connectionless?",
+            "options": [
+                "A. TCP",
+                "B. FTP",
+                "C. UDP",
+                "D. SSH"
+            ],
+            "answer": "C. UDP"
+        })
+
+    return {
+        "quiz": questions
+    }
