@@ -1,7 +1,11 @@
 from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
 from backend.resume_parser import extract_text_from_pdf, extract_text_from_docx
-from backend.document_parser import extract_text_from_pdf as extract_document_pdf, extract_text_from_txt
+from backend.document_parser import (
+    extract_text_from_pdf as extract_document_pdf,
+    extract_text_from_txt
+)
+from backend.chunker import chunk_text
 import shutil
 
 
@@ -25,6 +29,10 @@ def home():
     }
 
 
+# -------------------------------
+# RESUME UPLOAD
+# -------------------------------
+
 @app.post("/upload-resume")
 async def upload_resume(file: UploadFile = File(...)):
 
@@ -44,7 +52,6 @@ async def upload_resume(file: UploadFile = File(...)):
             "error": "Only PDF and DOCX files are supported"
         }
 
-    # Save resume text for analysis
     resume_data["filename"] = file.filename
     resume_data["text"] = text
 
@@ -53,6 +60,10 @@ async def upload_resume(file: UploadFile = File(...)):
         "text": text
     }
 
+
+# -------------------------------
+# JOB DESCRIPTION
+# -------------------------------
 
 @app.post("/job-description")
 def add_job_description(job: JobDescription):
@@ -74,6 +85,10 @@ def get_job_description():
     }
 
 
+# -------------------------------
+# RESUME ANALYSIS
+# -------------------------------
+
 @app.post("/analyze-resume")
 def analyze_resume():
 
@@ -90,7 +105,6 @@ def analyze_resume():
             "error": "No job description added"
         }
 
-
     skills = [
         "python",
         "fastapi",
@@ -102,10 +116,8 @@ def analyze_resume():
         "aws"
     ]
 
-
     resume_lower = resume_text.lower()
     job_lower = job_text.lower()
-
 
     matched_skills = []
 
@@ -113,19 +125,16 @@ def analyze_resume():
         if skill in resume_lower and skill in job_lower:
             matched_skills.append(skill)
 
-
     missing_skills = []
 
     for skill in skills:
         if skill in job_lower and skill not in resume_lower:
             missing_skills.append(skill)
 
-
     required_skills = [
         skill for skill in skills
         if skill in job_lower
     ]
-
 
     if required_skills:
         score = int(
@@ -134,12 +143,17 @@ def analyze_resume():
     else:
         score = 0
 
-
     return {
         "score": score,
         "matched_skills": matched_skills,
         "missing_skills": missing_skills
     }
+
+
+# -------------------------------
+# STUDY DOCUMENT UPLOAD
+# -------------------------------
+
 @app.post("/upload-document")
 async def upload_document(file: UploadFile = File(...)):
 
@@ -159,7 +173,43 @@ async def upload_document(file: UploadFile = File(...)):
             "error": "Only PDF and TXT files are supported"
         }
 
+    # Split study material into chunks
+    chunks = chunk_text(text)
+
+    # Save study material temporarily
+    resume_data["study_text"] = text
+    resume_data["study_chunks"] = chunks
+
     return {
         "filename": file.filename,
-        "text": text
-    }   
+        "text": text,
+        "chunks": chunks
+    }
+
+
+# -------------------------------
+# STUDY QUESTIONS
+# -------------------------------
+
+@app.post("/study-questions")
+def study_questions():
+
+    if "study_text" not in resume_data:
+        return {
+            "error": "No study document uploaded"
+        }
+
+    chunks = resume_data["study_chunks"]
+
+    questions = []
+
+    for i, chunk in enumerate(chunks, 1):
+
+        questions.append({
+            "question": f"What is the main idea of study chunk {i}?",
+            "answer": chunk
+        })
+
+    return {
+        "questions": questions
+    }
