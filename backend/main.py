@@ -7,6 +7,9 @@ from backend.document_parser import (
 )
 from backend.chunker import chunk_text
 import shutil
+from backend.chunker import chunk_text
+from backend.embeddings import generate_embedding
+from backend.qdrant_db import create_collection, store_chunks, search_chunks
 
 
 app = FastAPI()
@@ -280,4 +283,166 @@ def quiz():
 
     return {
         "quiz": questions
+    }
+# -------------------------------
+# WEEK 3: INGEST DOCUMENT
+# -------------------------------
+
+@app.post("/ingest-document")
+def ingest_document():
+
+    study_text = resume_data.get("study_text", "")
+
+    if not study_text:
+        return {
+            "error": "No study document uploaded"
+        }
+
+    chunks = chunk_text(study_text, max_words=300)
+
+    embeddings = [
+        generate_embedding(chunk)
+        for chunk in chunks
+    ]
+
+    create_collection()
+    store_chunks(chunks, embeddings)
+
+    resume_data["study_chunks"] = chunks
+
+    return {
+        "message": "Document successfully embedded and stored in Qdrant",
+        "chunks_stored": len(chunks),
+        "embedding_dimension": len(embeddings[0])
+    }
+
+
+# -------------------------------
+# WEEK 3: RETRIEVAL
+# -------------------------------
+
+@app.post("/retrieve")
+def retrieve(topic: str):
+
+    embedding = generate_embedding(topic)
+
+    results = search_chunks(embedding, limit=3)
+
+    return {
+        "query": topic,
+        "results": results
+    }
+
+
+# -------------------------------
+# WEEK 3: BASIC STUDY PLAN
+# -------------------------------
+
+@app.post("/study-plan")
+def study_plan(topic: str):
+
+    embedding = generate_embedding(topic)
+
+    results = search_chunks(embedding, limit=3)
+
+    if not results:
+        return {
+            "error": "No relevant study material found"
+        }
+
+    plan = []
+
+    for i, result in enumerate(results, 1):
+        plan.append({
+            "step": i,
+            "topic": topic,
+            "duration_minutes": 20,
+            "material": result["text"]
+        })
+
+    return {
+        "topic": topic,
+        "study_plan": plan,
+        "retrieved_chunks": len(results)
+    }
+# -------------------------------
+# WEEK 3: INGEST DOCUMENT
+# -------------------------------
+
+@app.post("/ingest-document")
+def ingest_document():
+
+    study_text = resume_data.get("study_text", "")
+
+    if not study_text:
+        return {
+            "error": "No study document uploaded"
+        }
+
+    chunks = chunk_text(study_text, max_words=300)
+
+    embeddings = [
+        generate_embedding(chunk)
+        for chunk in chunks
+    ]
+
+    create_collection()
+    store_chunks(chunks, embeddings)
+
+    resume_data["study_chunks"] = chunks
+
+    return {
+        "message": "Document successfully embedded and stored in Qdrant",
+        "chunks_stored": len(chunks),
+        "embedding_dimension": len(embeddings[0])
+    }
+
+
+# -------------------------------
+# WEEK 3: RETRIEVAL
+# -------------------------------
+
+@app.post("/retrieve")
+def retrieve(topic: str):
+
+    embedding = generate_embedding(topic)
+
+    results = search_chunks(embedding, limit=3)
+
+    return {
+        "query": topic,
+        "results": results
+    }
+
+
+# -------------------------------
+# WEEK 3: BASIC STUDY PLAN
+# -------------------------------
+
+@app.post("/study-plan")
+def study_plan(topic: str):
+
+    embedding = generate_embedding(topic)
+
+    results = search_chunks(embedding, limit=3)
+
+    if not results:
+        return {
+            "error": "No relevant study material found"
+        }
+
+    plan = []
+
+    for i, result in enumerate(results, 1):
+        plan.append({
+            "step": i,
+            "topic": topic,
+            "duration_minutes": 20,
+            "material": result["text"]
+        })
+
+    return {
+        "topic": topic,
+        "study_plan": plan,
+        "retrieved_chunks": len(results)
     }
