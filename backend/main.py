@@ -213,3 +213,29 @@ def study_questions():
     return {
         "questions": questions
     }
+# -------------------------------
+# STUDY FLASHCARDS
+# -------------------------------
+
+@app.post("/flashcards")
+def flashcards():
+
+    if "study_chunks" not in resume_data:
+        return {
+            "error": "No study document uploaded"
+        }
+
+    chunks = resume_data["study_chunks"]
+
+    flashcards = []
+
+    for i, chunk in enumerate(chunks, 1):
+
+        flashcards.append({
+            "question": f"What should you remember from study chunk {i}?",
+            "answer": chunk
+        })
+
+    return {
+        "flashcards": flashcards
+    }
