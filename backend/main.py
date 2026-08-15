@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
-from resume_parser import extract_text_from_pdf, extract_text_from_docx
+from backend.resume_parser import extract_text_from_pdf, extract_text_from_docx
+from backend.document_parser import extract_text_from_pdf as extract_document_pdf, extract_text_from_txt
 import shutil
 
 
@@ -139,3 +140,26 @@ def analyze_resume():
         "matched_skills": matched_skills,
         "missing_skills": missing_skills
     }
+@app.post("/upload-document")
+async def upload_document(file: UploadFile = File(...)):
+
+    file_path = f"study_{file.filename}"
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    if file.filename.endswith(".pdf"):
+        text = extract_document_pdf(file_path)
+
+    elif file.filename.endswith(".txt"):
+        text = extract_text_from_txt(file_path)
+
+    else:
+        return {
+            "error": "Only PDF and TXT files are supported"
+        }
+
+    return {
+        "filename": file.filename,
+        "text": text
+    }   
