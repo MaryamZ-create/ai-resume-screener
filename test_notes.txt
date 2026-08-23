@@ -1,0 +1,3 @@
+TCP is a reliable, connection-oriented protocol.
+UDP is a connectionless protocol.
+TCP uses acknowledgements to provide reliable delivery.
