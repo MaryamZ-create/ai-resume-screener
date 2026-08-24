@@ -1,0 +1,19 @@
+OSPF Study Notes
+
+OSPF stands for Open Shortest Path First.
+
+OSPF is a link-state interior gateway routing protocol.
+
+Routers running OSPF exchange information about network topology and build a link-state database.
+
+OSPF uses the Shortest Path First algorithm to calculate routes.
+
+OSPF uses areas to organize large networks. Area 0 is known as the backbone area.
+
+OSPF can form neighbor relationships with other OSPF routers.
+
+Router IDs uniquely identify OSPF routers within an OSPF routing domain.
+
+OSPF can provide faster and more scalable dynamic routing than manually configuring many static routes.
+
+A router can advertise directly connected networks into OSPF so that other routers can learn how to reach those networks.

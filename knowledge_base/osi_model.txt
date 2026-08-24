@@ -1,0 +1,17 @@
+OSI Model Study Notes
+
+The OSI model is a seven-layer conceptual model used to understand how network communication works.
+
+Layer 7 is the Application layer. It provides network services directly to applications. Examples include HTTP, HTTPS, FTP, SMTP, and DNS.
+
+Layer 6 is the Presentation layer. It handles data translation, encryption, decryption, compression, and formatting.
+
+Layer 5 is the Session layer. It establishes, manages, and terminates communication sessions between applications.
+
+Layer 4 is the Transport layer. It provides end-to-end communication between devices. TCP and UDP operate at this layer. TCP provides reliable, connection-oriented communication, while UDP provides connectionless communication.
+
+Layer 3 is the Network layer. It handles logical addressing and routing. IP operates at this layer, and routers forward packets between networks.
+
+Layer 2 is the Data Link layer. It provides node-to-node delivery and uses MAC addresses. Ethernet switches primarily operate at this layer.
+
+Layer 1 is the Physical layer. It transmits raw bits through physical media such as copper cables, fiber optic cables, and radio signals.

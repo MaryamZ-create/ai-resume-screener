@@ -1,0 +1,15 @@
+TCP and UDP Study Notes
+
+TCP stands for Transmission Control Protocol. TCP is reliable and connection-oriented.
+
+TCP establishes a connection before transmitting application data. It uses acknowledgements, sequence numbers, and retransmissions to provide reliable delivery.
+
+TCP is useful when reliable delivery is important. Examples include web communication using HTTPS, file transfers, and email protocols.
+
+UDP stands for User Datagram Protocol. UDP is connectionless and does not establish a connection before sending data.
+
+UDP does not provide the same reliability mechanisms as TCP. It has lower overhead and can be useful when speed and low latency are more important than guaranteed delivery.
+
+Examples of applications that can use UDP include DNS queries, streaming, online gaming, and real-time communication.
+
+The main difference is that TCP prioritizes reliable and ordered delivery, while UDP provides a simpler connectionless communication method with lower overhead.

@@ -1,0 +1,17 @@
+IP Addressing Study Notes
+
+An IP address identifies a device interface on an IP network.
+
+IPv4 addresses are 32-bit addresses normally written in dotted decimal notation. An example of an IPv4 address is 192.168.10.10.
+
+A subnet mask determines which portion of an IPv4 address represents the network and which portion represents the host.
+
+A /24 network uses the subnet mask 255.255.255.0 and provides 256 total addresses, including the network and broadcast addresses.
+
+Private IPv4 address ranges are commonly used inside local networks. The major private ranges include 10.0.0.0/8, 172.16.0.0/12, and 192.168.0.0/16.
+
+The default gateway is normally the router interface that a host uses to communicate with devices outside its local network.
+
+Routers use IP addresses and routing tables to determine where packets should be forwarded.
+
+Subnetting divides a larger network into smaller networks. It can improve address utilization and help separate different network segments.

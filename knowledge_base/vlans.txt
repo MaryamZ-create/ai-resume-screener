@@ -1,0 +1,19 @@
+VLAN Study Notes
+
+VLAN stands for Virtual Local Area Network.
+
+A VLAN logically separates devices into different broadcast domains on a switch.
+
+Devices in different VLANs normally cannot communicate directly at Layer 2. Communication between VLANs requires a Layer 3 device such as a router or multilayer switch.
+
+An access port normally carries traffic for a single VLAN.
+
+A trunk port can carry traffic for multiple VLANs between network devices.
+
+802.1Q is a common VLAN tagging standard used on trunk links.
+
+For example, VLAN 10 could be used for students and VLAN 20 could be used for staff.
+
+VLANs can improve network organization, segmentation, and security.
+
+Inter-VLAN routing allows devices in different VLANs to communicate through a Layer 3 device.
