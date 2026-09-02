@@ -1,6 +1,10 @@
 import { createServer } from "node:http";
+import { db } from "./db/connection.js";
+import { initializeDatabase } from "./db/database.js";
 
 const PORT = Number(process.env.PORT ?? 3000);
+
+initializeDatabase(db);
 
 const server = createServer((req, res) => {
   if (req.method === "GET" && req.url === "/health") {
