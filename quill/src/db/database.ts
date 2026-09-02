@@ -1,6 +1,12 @@
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-const db = new DatabaseSync("data/quill.db");
+const dbPath = process.env.DB_PATH ?? "data/quill.db";
+
+mkdirSync(dirname(dbPath), { recursive: true });
+
+const db = new DatabaseSync(dbPath);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
@@ -45,6 +51,6 @@ db.exec(`
   );
 `);
 
-console.log("Quill database initialized successfully.");
+console.log(`Quill database initialized successfully at ${dbPath}.`);
 
 db.close();
