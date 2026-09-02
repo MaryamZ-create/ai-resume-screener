@@ -24,6 +24,7 @@ export function initializeDatabase(db: DatabaseSync): void {
       title TEXT NOT NULL,
       slug TEXT NOT NULL,
       content_md TEXT NOT NULL,
+      tags TEXT NOT NULL DEFAULT '[]',
       status TEXT NOT NULL DEFAULT 'draft',
       meta_title TEXT,
       meta_description TEXT,
