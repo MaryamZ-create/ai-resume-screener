@@ -1,0 +1,213 @@
+import { DatabaseSync } from "node:sqlite";
+
+export type PostStatus = "draft" | "published" | "scheduled";
+
+export interface Post {
+  id: number;
+  userId: number;
+  title: string;
+  slug: string;
+  contentMd: string;
+  status: PostStatus;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  publishedAt: string | null;
+  scheduledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function mapPost(row: any): Post {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    title: row.title,
+    slug: row.slug,
+    contentMd: row.content_md,
+    status: row.status,
+    metaTitle: row.meta_title,
+    metaDescription: row.meta_description,
+    publishedAt: row.published_at,
+    scheduledAt: row.scheduled_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function createPost(
+  db: DatabaseSync,
+  userId: number,
+  title: string,
+  contentMd: string,
+  tags: string[] = []
+): Post {
+  const cleanTitle = title.trim();
+  const cleanContent = contentMd.trim();
+
+  if (!cleanTitle) {
+    throw new Error("Title is required.");
+  }
+
+  if (!cleanContent) {
+    throw new Error("Content is required.");
+  }
+
+  const slug =
+    cleanTitle
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || `post-${Date.now()}`;
+
+  const result = db
+    .prepare(
+      `INSERT INTO posts (user_id, title, slug, content_md)
+       VALUES (?, ?, ?, ?)
+       RETURNING *`
+    )
+    .get(userId, cleanTitle, slug, cleanContent);
+
+  return mapPost(result);
+}
+
+export function getPost(
+  db: DatabaseSync,
+  userId: number,
+  postId: number
+): Post | null {
+  const row = db
+    .prepare(
+      `SELECT *
+       FROM posts
+       WHERE id = ? AND user_id = ?`
+    )
+    .get(postId, userId);
+
+  return row ? mapPost(row) : null;
+}
+
+export function listPosts(
+  db: DatabaseSync,
+  userId: number,
+  status?: PostStatus,
+  limit = 20
+): Post[] {
+  const safeLimit = Math.min(Math.max(limit, 1), 100);
+
+  const rows = status
+    ? db
+        .prepare(
+          `SELECT *
+           FROM posts
+           WHERE user_id = ? AND status = ?
+           ORDER BY created_at DESC
+           LIMIT ?`
+        )
+        .all(userId, status, safeLimit)
+    : db
+        .prepare(
+          `SELECT *
+           FROM posts
+           WHERE user_id = ?
+           ORDER BY created_at DESC
+           LIMIT ?`
+        )
+        .all(userId, safeLimit);
+
+  return rows.map(mapPost);
+}
+
+export function updatePost(
+  db: DatabaseSync,
+  userId: number,
+  postId: number,
+  updates: {
+    title?: string;
+    contentMd?: string;
+    tags?: string[];
+  }
+): Post | null {
+  const existing = getPost(db, userId, postId);
+
+  if (!existing) {
+    return null;
+  }
+
+  const title =
+    updates.title !== undefined ? updates.title.trim() : existing.title;
+
+  const contentMd =
+    updates.contentMd !== undefined
+      ? updates.contentMd.trim()
+      : existing.contentMd;
+
+  if (!title) {
+    throw new Error("Title cannot be empty.");
+  }
+
+  if (!contentMd) {
+    throw new Error("Content cannot be empty.");
+  }
+
+  const slug =
+    updates.title !== undefined
+      ? title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "") || `post-${postId}`
+      : existing.slug;
+
+  const row = db
+    .prepare(
+      `UPDATE posts
+       SET title = ?,
+           slug = ?,
+           content_md = ?,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND user_id = ?
+       RETURNING *`
+    )
+    .get(title, slug, contentMd, postId, userId);
+
+  return row ? mapPost(row) : null;
+}
+
+export function deletePost(
+  db: DatabaseSync,
+  userId: number,
+  postId: number
+): boolean {
+  const result = db
+    .prepare(
+      `DELETE FROM posts
+       WHERE id = ? AND user_id = ?`
+    )
+    .run(postId, userId);
+
+  return result.changes > 0;
+}
+
+export function publishPost(
+  db: DatabaseSync,
+  userId: number,
+  postId: number
+): Post | null {
+  const post = getPost(db, userId, postId);
+
+  if (!post) {
+    return null;
+  }
+
+  const row = db
+    .prepare(
+      `UPDATE posts
+       SET status = 'published',
+           published_at = CURRENT_TIMESTAMP,
+           scheduled_at = NULL,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND user_id = ?
+       RETURNING *`
+    )
+    .get(postId, userId);
+
+  return row ? mapPost(row) : null;
+}
