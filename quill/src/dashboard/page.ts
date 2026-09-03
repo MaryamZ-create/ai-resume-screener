@@ -24,6 +24,18 @@ export function renderDashboard(email: string, posts: Post[]): string {
         </p>
         <p>${escapeHtml(post.contentMd.slice(0, 160))}${post.contentMd.length > 160 ? "..." : ""}</p>
         <p><strong>Slug:</strong> ${escapeHtml(post.slug)}</p>
+        ${
+          post.status === "draft"
+            ? `<form method="POST" action="/dashboard/posts/${post.id}/publish">
+                 <button type="submit">Publish</button>
+               </form>`
+            : `<form method="POST" action="/dashboard/posts/${post.id}/unpublish">
+                 <button type="submit">Unpublish</button>
+               </form>`
+        }
+        <form method="POST" action="/dashboard/posts/${post.id}/delete">
+          <button type="submit">Delete</button>
+        </form>
         <hr>
       </article>
     `

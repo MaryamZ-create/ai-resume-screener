@@ -6,7 +6,7 @@ import { renderDashboard } from "./dashboard/page.js";
 import { renderLoginPage } from "./dashboard/login-page.js";
 import { login } from "./auth/login.js";
 import { createSession, verifySession } from "./auth/session.js";
-import { createPost, listPosts } from "./posts/service.js";
+import { createPost, listPosts, publishPost, deletePost, unpublishPost } from "./posts/service.js";
 
 const PORT = Number(process.env.PORT ?? 3000);
 
@@ -121,6 +121,117 @@ const server = createServer(async (req, res) => {
       res.end("Could not create post.");
     }
 
+    return;
+  }
+
+  if (req.method === "POST" && req.url?.match(/^\/dashboard\/posts\/\d+\/delete$/)) {
+    const sessionToken = getSessionToken(req);
+    const session = sessionToken ? verifySession(sessionToken) : null;
+
+    if (!session) {
+      res.writeHead(302, { Location: "/login" });
+      res.end();
+      return;
+    }
+
+    const postId = Number(req.url.split("/")[3]);
+
+    const deleted = deletePost(db, session.userId, postId);
+
+    if (!deleted) {
+      res.writeHead(404, {
+        "Content-Type": "text/plain; charset=utf-8",
+      });
+      res.end("Post not found.");
+      return;
+    }
+
+    res.writeHead(302, {
+      Location: "/dashboard",
+    });
+    res.end();
+    return;
+  }
+
+  if (req.method === "POST" && req.url?.match(/^\/dashboard\/posts\/\d+\/delete$/)) {
+    const sessionToken = getSessionToken(req);
+    const session = sessionToken ? verifySession(sessionToken) : null;
+
+    if (!session) {
+      res.writeHead(302, { Location: "/login" });
+      res.end();
+      return;
+    }
+
+    const postId = Number(req.url.split("/")[3]);
+    const deleted = deletePost(db, session.userId, postId);
+
+    if (!deleted) {
+      res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+      res.end("Post not found.");
+      return;
+    }
+
+    res.writeHead(302, { Location: "/dashboard" });
+    res.end();
+    return;
+  }
+
+  if (req.method === "POST" && req.url?.match(/^\/dashboard\/posts\/\d+\/unpublish$/)) {
+    const sessionToken = getSessionToken(req);
+    const session = sessionToken ? verifySession(sessionToken) : null;
+
+    if (!session) {
+      res.writeHead(302, { Location: "/login" });
+      res.end();
+      return;
+    }
+
+    const postId = Number(req.url.split("/")[3]);
+
+    const post = unpublishPost(db, session.userId, postId);
+
+    if (!post) {
+      res.writeHead(404, {
+        "Content-Type": "text/plain; charset=utf-8",
+      });
+      res.end("Post not found.");
+      return;
+    }
+
+    res.writeHead(302, {
+      Location: "/dashboard",
+    });
+    res.end();
+    return;
+  }
+
+  if (req.method === "POST" && req.url?.match(/^\/dashboard\/posts\/\d+\/publish$/)) {
+    const sessionToken = getSessionToken(req);
+    const session = sessionToken ? verifySession(sessionToken) : null;
+
+    if (!session) {
+      res.writeHead(302, { Location: "/login" });
+      res.end();
+      return;
+    }
+
+    const postId = Number(req.url.split("/")[3]);
+
+    const post = publishPost(db, session.userId, postId);
+
+    if (!post) {
+      res.writeHead(404, {
+        "Content-Type": "text/plain; charset=utf-8",
+      });
+      res.end("Post not found.");
+      return;
+    }
+
+    res.writeHead(302, {
+      Location: "/dashboard",
+    });
+    res.end();
     return;
   }
 

@@ -216,3 +216,29 @@ export function publishPost(
 
   return row ? mapPost(row) : null;
 }
+
+export function unpublishPost(
+  db: DatabaseSync,
+  userId: number,
+  postId: number
+): Post | null {
+  const post = getPost(db, userId, postId);
+
+  if (!post) {
+    return null;
+  }
+
+  const row = db
+    .prepare(
+      `UPDATE posts
+       SET status = 'draft',
+           published_at = NULL,
+           scheduled_at = NULL,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND user_id = ?
+       RETURNING *`
+    )
+    .get(postId, userId);
+
+  return row ? mapPost(row) : null;
+}
