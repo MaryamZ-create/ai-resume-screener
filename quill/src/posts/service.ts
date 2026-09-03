@@ -8,6 +8,7 @@ export interface Post {
   title: string;
   slug: string;
   contentMd: string;
+  tags: string[];
   status: PostStatus;
   metaTitle: string | null;
   metaDescription: string | null;
@@ -24,6 +25,7 @@ function mapPost(row: any): Post {
     title: row.title,
     slug: row.slug,
     contentMd: row.content_md,
+    tags: JSON.parse(row.tags ?? '[]'),
     status: row.status,
     metaTitle: row.meta_title,
     metaDescription: row.meta_description,
@@ -60,11 +62,11 @@ export function createPost(
 
   const result = db
     .prepare(
-      `INSERT INTO posts (user_id, title, slug, content_md)
-       VALUES (?, ?, ?, ?)
+      `INSERT INTO posts (user_id, title, slug, content_md, tags)
+       VALUES (?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .get(userId, cleanTitle, slug, cleanContent);
+    .get(userId, cleanTitle, slug, cleanContent, JSON.stringify(tags));
 
   return mapPost(result);
 }
@@ -148,6 +150,8 @@ export function updatePost(
     throw new Error("Content cannot be empty.");
   }
 
+  const tags = updates.tags !== undefined ? updates.tags : existing.tags;
+
   const slug =
     updates.title !== undefined
       ? title
@@ -162,11 +166,12 @@ export function updatePost(
        SET title = ?,
            slug = ?,
            content_md = ?,
+           tags = ?,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = ? AND user_id = ?
        RETURNING *`
     )
-    .get(title, slug, contentMd, postId, userId);
+    .get(title, slug, contentMd, JSON.stringify(tags), postId, userId);
 
   return row ? mapPost(row) : null;
 }
