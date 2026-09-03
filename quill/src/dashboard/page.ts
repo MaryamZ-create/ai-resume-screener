@@ -54,6 +54,12 @@ export function renderDashboard(email: string, posts: Post[]): string {
 
   <p>Welcome, ${escapeHtml(email)}</p>
 
+  <h2>MCP Connection</h2>
+  <p>Connect your IDE to Quill using the MCP server:</p>
+  <pre>${escapeHtml((process.env.BASE_URL ?? "http://localhost:3001") + "/mcp")}</pre>
+  <p>Use your Quill API key as a Bearer token when configuring your MCP client.</p>
+
+
   <h2>Create a Post</h2>
 
   <form method="POST" action="/dashboard/posts">

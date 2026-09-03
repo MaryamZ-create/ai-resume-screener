@@ -242,3 +242,125 @@ export function unpublishPost(
 
   return row ? mapPost(row) : null;
 }
+
+export function schedulePost(
+  db: DatabaseSync,
+  userId: number,
+  postId: number,
+  publishAt: string
+): Post | null {
+  const post = getPost(db, userId, postId);
+
+  if (!post) {
+    return null;
+  }
+
+  if (!publishAt || Number.isNaN(Date.parse(publishAt))) {
+    throw new Error("A valid publish date is required.");
+  }
+
+  const row = db
+    .prepare(
+      `UPDATE posts
+       SET status = 'scheduled',
+           scheduled_at = ?,
+           published_at = NULL,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND user_id = ?
+       RETURNING *`
+    )
+    .get(publishAt, postId, userId);
+
+  return row ? mapPost(row) : null;
+}
+
+export function manageSeo(
+  db: DatabaseSync,
+  userId: number,
+  postId: number,
+  metaTitle?: string,
+  metaDescription?: string
+): Post | null {
+  const existing = getPost(db, userId, postId);
+
+  if (!existing) {
+    return null;
+  }
+
+  const nextMetaTitle =
+    metaTitle !== undefined ? metaTitle.trim() || null : existing.metaTitle;
+
+  const nextMetaDescription =
+    metaDescription !== undefined
+      ? metaDescription.trim() || null
+      : existing.metaDescription;
+
+  const row = db
+    .prepare(
+      `UPDATE posts
+       SET meta_title = ?,
+           meta_description = ?,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND user_id = ?
+       RETURNING *`
+    )
+    .get(nextMetaTitle, nextMetaDescription, postId, userId);
+
+  return row ? mapPost(row) : null;
+}
+
+export function listPublishedPosts(
+  db: DatabaseSync,
+  limit = 50
+): Post[] {
+  const safeLimit = Math.min(Math.max(limit, 1), 100);
+
+  const rows = db
+    .prepare(
+      `SELECT *
+       FROM posts
+       WHERE status = 'published'
+       ORDER BY published_at DESC
+       LIMIT ?`
+    )
+    .all(safeLimit);
+
+  return rows.map(mapPost);
+}
+
+export function getAnalytics(
+  db: DatabaseSync,
+  userId: number,
+  postId?: number,
+  range = 30
+) {
+  const safeRange = Math.min(Math.max(range, 1), 365);
+
+  const rows = postId
+    ? db.prepare(
+        `SELECT event_type, COUNT(*) AS count
+         FROM analytics_events e
+         JOIN posts p ON p.id = e.post_id
+         WHERE p.user_id = ?
+           AND p.id = ?
+           AND e.occurred_at >= datetime('now', ?)
+         GROUP BY event_type`
+      ).all(userId, postId, `-${safeRange} days`)
+    : db.prepare(
+        `SELECT event_type, COUNT(*) AS count
+         FROM analytics_events e
+         JOIN posts p ON p.id = e.post_id
+         WHERE p.user_id = ?
+           AND e.occurred_at >= datetime('now', ?)
+         GROUP BY event_type`
+      ).all(userId, `-${safeRange} days`);
+
+  return {
+    range: safeRange,
+    postId: postId ?? null,
+    events: rows.map((row: any) => ({
+      eventType: row.event_type,
+      count: Number(row.count),
+    })),
+  };
+}

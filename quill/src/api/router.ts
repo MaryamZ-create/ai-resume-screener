@@ -8,6 +8,8 @@ import {
   listPosts,
   updatePost,
   publishPost,
+  unpublishPost,
+  schedulePost,
 } from "../posts/service.js";
 
 function sendJson(
@@ -137,6 +139,54 @@ export async function handleApiRequest(
         }
 
         sendJson(res, 200, { success: true });
+        return true;
+      }
+    }
+
+    const unpublishMatch = req.url.match(
+      /^\/api\/posts\/(\d+)\/unpublish$/
+    );
+
+    if (req.method === "POST" && unpublishMatch) {
+      const postId = Number(unpublishMatch[1]);
+      const post = unpublishPost(db, user.userId, postId);
+
+      if (!post) {
+        sendJson(res, 404, { error: "Post not found." });
+        return true;
+      }
+
+      sendJson(res, 200, post);
+      return true;
+    }
+
+    const scheduleMatch = req.url.match(
+      /^\/api\/posts\/(\d+)\/schedule$/
+    );
+
+    if (req.method === "POST" && scheduleMatch) {
+      const postId = Number(scheduleMatch[1]);
+      const body = await readJsonBody(req);
+
+      try {
+        const post = schedulePost(
+          db,
+          user.userId,
+          postId,
+          String(body.publish_at ?? "")
+        );
+
+        if (!post) {
+          sendJson(res, 404, { error: "Post not found." });
+        return true;
+        }
+
+        sendJson(res, 200, post);
+      return true;
+      } catch (error) {
+        sendJson(res, 400, {
+          error: error instanceof Error ? error.message : "Invalid request.",
+        });
         return true;
       }
     }

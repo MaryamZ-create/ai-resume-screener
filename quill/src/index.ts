@@ -6,7 +6,7 @@ import { renderDashboard } from "./dashboard/page.js";
 import { renderLoginPage } from "./dashboard/login-page.js";
 import { login } from "./auth/login.js";
 import { createSession, verifySession } from "./auth/session.js";
-import { createPost, listPosts, publishPost, deletePost, unpublishPost } from "./posts/service.js";
+import { createPost, listPosts, listPublishedPosts, publishPost, deletePost, unpublishPost } from "./posts/service.js";
 
 const PORT = Number(process.env.PORT ?? 3000);
 
@@ -232,6 +232,37 @@ const server = createServer(async (req, res) => {
       Location: "/dashboard",
     });
     res.end();
+    return;
+  }
+
+  if (req.method === "GET" && req.url === "/blog") {
+    const posts = listPublishedPosts(db);
+    const items = posts.map(
+      (post) => `<article>
+        <h2>${post.title}</h2>
+        <p>${post.contentMd.slice(0, 300)}</p>
+        <p><strong>Tags:</strong> ${post.tags.join(", ")}</p>
+        <hr>
+      </article>`
+    ).join("");
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quill Blog</title>
+</head>
+<body>
+  <h1>Quill Blog</h1>
+  ${posts.length ? items : "<p>No published posts yet.</p>"}
+</body>
+</html>`;
+
+    res.writeHead(200, {
+      "Content-Type": "text/html; charset=utf-8",
+    });
+    res.end(html);
     return;
   }
 

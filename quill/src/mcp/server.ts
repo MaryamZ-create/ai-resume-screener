@@ -14,6 +14,10 @@ import {
   listPosts,
   updatePost,
   publishPost,
+  unpublishPost,
+  schedulePost,
+  manageSeo,
+  getAnalytics,
 } from "../posts/service.js";
 
 const PORT = Number(process.env.MCP_PORT ?? 3001);
@@ -214,6 +218,114 @@ function createMcpServer(userId: number): McpServer {
           {
             type: "text",
             text: JSON.stringify(post, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
+
+  server.tool(
+    "unpublish_post",
+    "Unpublish one of the authenticated user's blog posts.",
+    {
+      id: z.number().int().positive(),
+    },
+    async ({ id }) => {
+      const post = unpublishPost(db, userId, id);
+
+      if (!post) {
+        return {
+          isError: true,
+          content: [{ type: "text", text: "Post not found." }],
+        };
+      }
+
+      return {
+        content: [{ type: "text", text: JSON.stringify(post, null, 2) }],
+      };
+    }
+  );
+
+  server.tool(
+    "manage_seo",
+    "Update SEO metadata for one of the authenticated user's blog posts.",
+    {
+      id: z.number().int().positive(),
+      meta_title: z.string().optional(),
+      meta_description: z.string().optional(),
+    },
+    async ({ id, meta_title, meta_description }) => {
+      const post = manageSeo(
+        db,
+        userId,
+        id,
+        meta_title,
+        meta_description
+      );
+
+      if (!post) {
+        return {
+          isError: true,
+          content: [{ type: "text", text: "Post not found." }],
+        };
+      }
+
+      return {
+        content: [{ type: "text", text: JSON.stringify(post, null, 2) }],
+      };
+    }
+  );
+
+  server.tool(
+    "schedule_post",
+    "Schedule one of the authenticated user's blog posts for publication.",
+    {
+      id: z.number().int().positive(),
+      publish_at: z.string().min(1),
+    },
+    async ({ id, publish_at }) => {
+      try {
+        const post = schedulePost(db, userId, id, publish_at);
+
+        if (!post) {
+          return {
+            isError: true,
+            content: [{ type: "text", text: "Post not found." }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(post, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: error instanceof Error ? error.message : "Invalid publish date.",
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_analytics",
+    "Get analytics event counts for the authenticated user's blog.",
+    {
+      post_id: z.number().int().positive().optional(),
+      range: z.number().int().positive().max(365).optional(),
+    },
+    async ({ post_id, range }) => {
+      const analytics = getAnalytics(db, userId, post_id, range);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(analytics, null, 2),
           },
         ],
       };
